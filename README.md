@@ -18,4 +18,14 @@ go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions>
 go run main.go -json=example.json -dir=../example -ext=.go
 ```
 
+# Build
 
+```bash
+go build -o not-used-key-checker main.go
+```
+
+# Run
+
+```bash
+./not-used-key-checker -json=example.json -dir=../example -ext=.go
+```
