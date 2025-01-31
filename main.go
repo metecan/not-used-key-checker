@@ -85,7 +85,7 @@ func main() {
 			for _, ext := range extList {
 				if strings.HasSuffix(strings.ToLower(path), ext) {
 					fileList = append(fileList, path)
-					fmt.Println("Scanning file:", path) // Debug log
+					fmt.Println("Scanning file:", path)
 					break
 				}
 			}
