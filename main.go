@@ -12,7 +12,7 @@ import (
 )
 
 // scanFile checks if any key exists in the given file
-func scanFile(filePath string, keys map[string]struct{}, foundKeys map[string]string, results chan<- string, wg *sync.WaitGroup, mu *sync.Mutex) {
+func scanFile(filePath string, keys map[string]struct{}, foundKeys map[string]bool, wg *sync.WaitGroup, mu *sync.Mutex) {
 	defer wg.Done()
 
 	file, err := os.Open(filePath)
@@ -25,14 +25,14 @@ func scanFile(filePath string, keys map[string]struct{}, foundKeys map[string]st
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.ToLower(scanner.Text())
+
+		mu.Lock()
 		for key := range keys {
 			if strings.Contains(line, key) {
-				mu.Lock()
-				foundKeys[key] = filePath
-				mu.Unlock()
-				results <- fmt.Sprintf("FOUND: %s in %s", key, filePath)
+				foundKeys[key] = true
 			}
 		}
+		mu.Unlock()
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -67,8 +67,10 @@ func main() {
 	}
 
 	keys := make(map[string]struct{})
+	foundKeys := make(map[string]bool)
 	for key := range jsonData {
 		keys[strings.ToLower(key)] = struct{}{}
+		foundKeys[strings.ToLower(key)] = false
 	}
 
 	fmt.Printf("✅ Loaded %d keys from JSON\n", len(keys))
@@ -95,7 +97,6 @@ func main() {
 			for _, ext := range extList {
 				if strings.HasSuffix(strings.ToLower(path), ext) {
 					fileList = append(fileList, path)
-					fmt.Println("Scanning file:", path) // Debug log
 					break
 				}
 			}
@@ -111,34 +112,19 @@ func main() {
 	fmt.Printf("🔍 Found %d files to scan\n", len(fileList))
 
 	var wg sync.WaitGroup
-	results := make(chan string, 100)
-	foundKeys := make(map[string]string)
 	var mu sync.Mutex
 
 	for _, file := range fileList {
 		wg.Add(1)
-		go scanFile(file, keys, foundKeys, results, &wg, &mu)
+		go scanFile(file, keys, foundKeys, &wg, &mu)
 	}
 
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
+	wg.Wait()
 
-	foundCount := 0
-	for result := range results {
-		fmt.Println(result)
-		foundCount++
-	}
-
-	// List missing keys
-	fmt.Println("\n📜 SUMMARY")
-	fmt.Println("===========================")
-	fmt.Printf("✅ Found %d occurrences\n", foundCount)
-
+	// Collect missing keys
 	missingKeys := []string{}
-	for key := range keys {
-		if _, exists := foundKeys[key]; !exists {
+	for key, found := range foundKeys {
+		if !found {
 			missingKeys = append(missingKeys, key)
 		}
 	}
