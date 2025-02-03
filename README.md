@@ -11,6 +11,7 @@ go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions>
 - `json`: The path to the JSON file.
 - `dir`: The path to the project directory.
 - `ext`: The file extensions to search for. Default is `.js,.ts,.tsx`.
+- `exclude`: The directories to exclude. Default is `node_modules,.git,.next,dist,build`.
 
 ## Example
 
