@@ -44,10 +44,11 @@ func main() {
 	jsonFilePath := flag.String("json", "", "Path to the JSON file")
 	projectDir := flag.String("dir", "", "Directory to scan")
 	extensions := flag.String("ext", ".js,.ts,.tsx,.jsx,.json", "Comma-separated list of file extensions")
+	excludeDirs := flag.String("exclude", "node_modules,.git,.next,dist,build", "Comma-separated list of directories to exclude")
 	flag.Parse()
 
 	if *jsonFilePath == "" || *projectDir == "" {
-		fmt.Println("Usage: go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions>")
+		fmt.Println("Usage: go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions> -exclude=<directories>")
 		os.Exit(1)
 	}
 
@@ -73,6 +74,7 @@ func main() {
 	fmt.Printf("✅ Loaded %d keys from JSON\n", len(keys))
 
 	extList := strings.Split(*extensions, ",")
+	excluded := strings.Split(*excludeDirs, ",")
 	fileList := []string{}
 
 	// Collect matching files
@@ -81,11 +83,19 @@ func main() {
 			fmt.Println("error accessing:", path, err)
 			return nil
 		}
+
+		// Check if the current path is in the excluded directories
+		for _, ex := range excluded {
+			if strings.Contains(path, "/"+ex+"/") {
+				return nil
+			}
+		}
+
 		if !d.IsDir() {
 			for _, ext := range extList {
 				if strings.HasSuffix(strings.ToLower(path), ext) {
 					fileList = append(fileList, path)
-					fmt.Println("Scanning file:", path)
+					fmt.Println("Scanning file:", path) // Debug log
 					break
 				}
 			}
@@ -133,9 +143,9 @@ func main() {
 		}
 	}
 
-	// Write missing keys to a file
 	fmt.Printf("\n❌ MISSING KEYS: %d\n", len(missingKeys))
 
+	// Write missing keys to a file
 	if len(missingKeys) > 0 {
 		file, err := os.Create("missing_keys.txt")
 		if err != nil {
