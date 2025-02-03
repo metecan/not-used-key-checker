@@ -5,7 +5,7 @@ This is a simple script that checks for unused keys in a JSON file. It is useful
 ## Usage
 
 ```bash
-go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions>
+go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions> -exclude=<exclude_directories>
 ```
 
 - `json`: The path to the JSON file.
@@ -15,7 +15,7 @@ go run main.go -json=<json_file_path> -dir=<project_directory> -ext=<extensions>
 ## Example
 
 ```bash
-go run main.go -json=example.json -dir=../example -ext=.go
+go run main.go -json=example.json -dir=../example -ext=.go -exclude=vendor,node_modules
 ```
 
 # Build
@@ -27,5 +27,5 @@ go build -o not-used-key-checker main.go
 # Run
 
 ```bash
-./not-used-key-checker -json=example.json -dir=../example -ext=.go
+./not-used-key-checker -json=example.json -dir=../example -ext=.go -exclude=vendor,node_modules
 ```
